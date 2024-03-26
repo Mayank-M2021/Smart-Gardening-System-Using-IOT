@@ -1,0 +1,158 @@
+#define BLYNK_TEMPLATE_ID "TMPLiPTGHJwl"
+#define BLYNK_DEVICE_NAME "smart gardening"
+#define BLYNK_AUTH_TOKEN "rCbmur5-7g7_re7O7d4CadRFa_rJ-q1U"
+ 
+// Comment this out to disable prints and save space
+#define BLYNK_PRINT Serial
+ 
+ String long_lat;
+ 
+//String loc="";
+#include <WiFi.h>
+#include <WiFiClient.h>
+#include <BlynkSimpleEsp32.h>
+
+char auth[] = BLYNK_AUTH_TOKEN;
+
+// Your WiFi credentials.
+// Set password to "" for open networks.
+//char ssid[] = "Mayank";
+//char pass[] = "Mayank56890";
+
+char ssid[] = "iot";
+char pass[] = "12345678";
+BlynkTimer timer;
+#include <DHT.h>
+#define DHTPIN 2 
+#define DHTTYPE DHT11
+
+#define sensor1 18//mois
+#define sensor2 4 //light
+#define sensor3 32//light 
+
+int buzz=27;
+int value=0; 
+int pir=23;
+int pirval;
+int RelayPin1=19;
+int RelayPin2=21;
+
+DHT dht(DHTPIN, DHTTYPE);
+
+
+void setup() {
+
+  
+  Serial.begin(115200); // Starts the serial communication
+  
+Blynk.begin(auth, ssid, pass, "blynk.cloud", 80);
+
+    pinMode(pir,INPUT);
+    pinMode(buzz,OUTPUT);
+ 
+    pinMode(RelayPin1, OUTPUT);
+    pinMode(RelayPin2, OUTPUT);
+    
+    Serial.println("DHTxx test!");
+   dht.begin();
+   pinMode(sensor1,INPUT);
+      pinMode(sensor2,INPUT);
+    pinMode(sensor3,INPUT);
+      
+}
+
+void loop() {
+ 
+Blynk.run();
+timer.run();
+
+ int val11 = analogRead(sensor3);  // Read the analog value form sensor
+ Blynk.virtualWrite(V0,val11 );
+int val = digitalRead(sensor2);  // Read the analog value form sensor
+if (val==1)
+{
+
+  digitalWrite(RelayPin2, HIGH);
+Blynk.virtualWrite(V6,"Light on");
+  //delay(3000);
+}
+else{
+
+  digitalWrite(RelayPin2, LOW);
+ Blynk.virtualWrite(V6,"Light off");
+ // delay(3000);
+
+}
+
+  
+int val1 = digitalRead(sensor1);  // Read the analog value form sensor
+if (val1==1)
+{
+
+  digitalWrite(RelayPin1, LOW);
+Blynk.virtualWrite(V3,"Moisture is low");
+  //delay(3000);
+}
+else{
+
+  digitalWrite(RelayPin1, HIGH);
+ Blynk.virtualWrite(V3,"Moisture is high");
+ // delay(3000);
+
+}
+
+
+  digitalWrite(pir, HIGH);  // turn the sensor ON
+  delay(10);                      // wait 10 milliseconds
+  
+pirval = digitalRead(pir); // read the analog value from sensor
+  
+
+  if(pirval==1)
+  {
+     digitalWrite( pir, 1);
+     digitalWrite(buzz,HIGH);
+     Blynk.virtualWrite(V4,pirval);
+     
+  }
+  else{
+  
+    
+     digitalWrite( pir, 0);
+     digitalWrite(buzz,LOW);
+     Blynk.virtualWrite(V4,pirval);
+     
+    }
+
+
+ delay(1000);
+   float h = dht.readHumidity();
+   // Reading temperature or humidity takes about 250 milliseconds!
+   float t = dht.readTemperature();
+   // Read temperature as Celsius (the default)
+   float f = dht.readTemperature(true);
+   // Read temperature as Fahrenheit (isFahrenheit = true)
+   // Check if any reads failed and exit early (to try again).
+   if (isnan(h) || isnan(t) || isnan(f)) {
+      Serial.println("Failed to read from DHT sensor!");
+      return;
+}
+
+ float hif = dht.computeHeatIndex(f, h);
+   // Compute heat index in Celsius (isFahreheit = false)
+   float hic = dht.computeHeatIndex(t, h, false);
+   Serial.println ("Humidity: ");
+   Serial.println (h);
+   Serial.println (" %\t");
+   Serial.println ("Temperature: ");
+   Serial.println (t);
+   Serial.println (" *C ");
+   Serial.print("The water sensor value: ");
+   Serial.println(value);
+   Serial.println(pirval);
+  Blynk.virtualWrite(V1,t);
+  Blynk.virtualWrite(V2,h); 
+   delay(1000); 
+   
+
+}
